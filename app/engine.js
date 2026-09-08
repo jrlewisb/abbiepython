@@ -217,6 +217,30 @@
   /* ---------- flatten the curriculum ---------- */
 
   var FLAT = [];   // every step in order
+
+  /* A step's progress key is its stable id plus a hash of the parts that decide
+     whether a past pass still counts: the task wording, the starter code, and
+     the checks themselves (a function's source changes when the check changes).
+     Prose is deliberately excluded — fixing a typo should not wipe her tick.
+     Change the question and the key changes, so the step comes back unticked
+     and she does it again against the new version. Her typed code is stored
+     under the plain id, so she never loses what she wrote. */
+  function hashStep(step) {
+    var parts = [
+      step.task || "",
+      step.starter || "",
+      (step.checks || []).map(function (c) {
+        return c.label + "|" + String(c.test);
+      }).join("~")
+    ].join("\u0000");
+    var h = 2166136261;
+    for (var i = 0; i < parts.length; i++) {
+      h ^= parts.charCodeAt(i);
+      h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
+    }
+    return h.toString(36);
+  }
+
   function buildIndex() {
     FLAT = [];
     CHAPTERS.forEach(function (ch, ci) {
@@ -225,6 +249,7 @@
         st.chapter = ch;
         st.n = si + 1;
         st.id = st.id || (ch.id + "-" + (si + 1));
+        st.key = st.id + "@" + hashStep(st);
         st.flat = FLAT.length;
         FLAT.push(st);
       });
@@ -232,11 +257,11 @@
   }
 
   function chapterDone(ch) {
-    return (ch.steps || []).every(function (s) { return state.done[s.id]; });
+    return (ch.steps || []).every(function (s) { return state.done[s.key]; });
   }
   function chapterCount(ch) {
     var d = 0;
-    (ch.steps || []).forEach(function (s) { if (state.done[s.id]) { d++; } });
+    (ch.steps || []).forEach(function (s) { if (state.done[s.key]) { d++; } });
     return d;
   }
 
@@ -249,7 +274,7 @@
     sb.innerHTML = "";
 
     var totalDone = 0;
-    FLAT.forEach(function (s) { if (state.done[s.id]) { totalDone++; } });
+    FLAT.forEach(function (s) { if (state.done[s.key]) { totalDone++; } });
     var pct = FLAT.length ? Math.round((totalDone / FLAT.length) * 100) : 0;
 
     var brand = el("div", "brand",
@@ -278,7 +303,7 @@
       var steps = el("div", "steps");
       (ch.steps || []).forEach(function (st) {
         var b = el("button", null,
-          '<span class="tick">' + (state.done[st.id] ? "✓" : "") + "</span>" +
+          '<span class="tick">' + (state.done[st.key] ? "✓" : "") + "</span>" +
           "<span>" + st.title + "</span>" +
           (st.checks ? '<span class="kind">task</span>' : ""));
         if (current === st) { b.classList.add("current"); }
@@ -458,8 +483,8 @@
           if (allPass) {
             verdict.className = "verdict ok";
             verdict.textContent = "All checks passed. On you go.";
-            if (!state.done[step.id]) {
-              state.done[step.id] = true;
+            if (!state.done[step.key]) {
+              state.done[step.key] = true;
               saveState();
               renderSidebar();
             }
@@ -493,7 +518,7 @@
       var nxt = el("button", "primary",
         step.flat < FLAT.length - 1 ? "Got it — next →" : "Finish");
       nxt.addEventListener("click", function () {
-        state.done[step.id] = true;
+        state.done[step.key] = true;
         saveState();
         if (step.flat < FLAT.length - 1) { go(step.flat + 1); }
         else { renderSidebar(); }
@@ -574,7 +599,7 @@
       // resume where she left off: first step not yet ticked
       i = 0;
       for (var k = 0; k < FLAT.length; k++) {
-        if (!state.done[FLAT[k].id]) { i = k; break; }
+        if (!state.done[FLAT[k].key]) { i = k; break; }
       }
     }
     go(i);

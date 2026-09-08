@@ -119,11 +119,25 @@ every step. There is no account and no server — which means:
   Worth telling her once.
 - You cannot see her progress from your end. If you want to know how she is going, ask her.
 
-### Why step ids matter
+### Step ids, and what happens when a question changes
 
-Progress is keyed on the `id` field of each step, which is why every step has an explicit one
-(`ch02-label-on-box`) rather than a generated number. **Never change an id once she has
-started** — a changed id reads as an untouched step, and a reused id puts her tick on the
-wrong lesson. Adding, removing and reordering steps is all completely safe as long as the ids
-of the existing ones stay put. `node tools/check-lessons.js` fails the build if an id is
-missing or duplicated.
+Progress is keyed on `<step id>@<content hash>`.
+
+The **id** is written explicitly in the lesson file (`ch02-label-on-box`) rather than generated
+from position, so inserting or reordering steps never shifts her ticks onto the wrong lessons.
+Don't change an id once she has started — a changed id reads as a step she has never seen.
+
+The **hash** covers the parts that decide whether a past pass still counts: the task wording,
+the starter code, and the source of every check. So if you rewrite a question or tighten its
+grading, the key changes, the step comes back unticked, and she does it again against the new
+version. Prose is deliberately *not* hashed — fixing a typo in an explanation should not wipe
+her tick.
+
+Her typed code is stored under the plain id, so a question edit never destroys what she wrote.
+The old code stays in the editor for her to adapt, and "Reset code" is there if it is no longer
+relevant.
+
+Superseded keys are left in place rather than pruned. They are a few bytes each, and pruning
+would risk wiping real progress if a lesson file happened to 404 mid-deploy.
+
+`node tools/check-lessons.js` fails if an id is missing or duplicated.
