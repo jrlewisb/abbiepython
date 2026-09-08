@@ -28,14 +28,11 @@ will — you have to find and fix all three, and if you miss one, nothing compla
 again by name instead of writing it out again. That is the whole idea.</p>
 
 <pre><code>def dose_for(weight_kg):
-    return weight_kg * 0.5
+    return weight_kg * 0.5</code></pre>
 
-print(f"P01: {dose_for(68):.1f} mg")
-print(f"P02: {dose_for(72):.1f} mg")
-print(f"P03: {dose_for(55):.1f} mg")</code></pre>
+<p>Now the rule lives in one place, and everywhere else just asks for it by name:</p>
 
-<p>Now the rule lives in one place. Change <code>0.5</code> to <code>0.6</code> on that one
-line and all three participants update.</p>
+<pre><code>dose_for(68)     # 34.0</code></pre>
 
 <h3>The three things you get</h3>
 
@@ -52,43 +49,38 @@ wrong because nobody could easily check one piece in isolation.</li>
 
 <div class="note"><span class="lbl">You have been using functions all along</span>
 <p><code>print()</code>, <code>len()</code>, <code>round()</code>, <code>sum()</code> — all
-functions somebody else wrote and named. You have been calling them since chapter 1. The only
-new thing here is writing your own.</p></div>
+functions somebody else wrote and named. You have been calling them since chapter 1. Writing
+your own comes in the next step; for now, just use this one.</p></div>
 `,
-      starter: 'print(f"P01: {68 * 0.5:.1f} mg")\nprint(f"P02: {72 * 0.5:.1f} mg")\nprint(f"P03: {55 * 0.5:.1f} mg")',
-      task: `<p>Rewrite this so the rule exists once.</p>
+      starter: '# The rule now lives in exactly one place.\ndef dose_for(weight_kg):\n    return weight_kg * 0.5\n\n\n# ...but these three lines still do the maths by hand.\nprint(f"P01: {68 * 0.5:.1f} mg")\nprint(f"P02: {72 * 0.5:.1f} mg")\nprint(f"P03: {55 * 0.5:.1f} mg")',
+      task: `<p>The function is written for you. You do not have to write one yet — just use it.</p>
 <ol>
-<li>Write a function <code>dose_for(weight_kg)</code> that <strong>returns</strong> the
-dose.</li>
-<li>Use it in all three lines.</li>
-<li>The protocol has changed to <strong>0.8</strong> mg per kilogram — make that change, in
-the one place it now lives.</li>
+<li>Replace the hand-done maths in each print with a call to <code>dose_for(...)</code>, so
+<code>{68 * 0.5:.1f}</code> becomes <code>{dose_for(68):.1f}</code>.</li>
+<li>Now that the rule lives in one place — the protocol has changed to <strong>0.8</strong> mg
+per kilogram. Make that change.</li>
 </ol>
 <p>Expected output:</p>
 <pre><code>P01: 54.4 mg
 P02: 57.6 mg
 P03: 44.0 mg</code></pre>`,
-      hint: `The function is two lines:
-<pre><code>def dose_for(weight_kg):
-    return weight_kg * 0.8</code></pre>
-Then swap each <code>68 * 0.5</code> for <code>dose_for(68)</code>, keeping the
-<code>:.1f</code> part.`,
-      solution: 'def dose_for(weight_kg):\n    return weight_kg * 0.8\n\nprint(f"P01: {dose_for(68):.1f} mg")\nprint(f"P02: {dose_for(72):.1f} mg")\nprint(f"P03: {dose_for(55):.1f} mg")',
+      hint: `In the first print, replace <code>68 * 0.5</code> with <code>dose_for(68)</code>,
+keeping the <code>:.1f</code> after it. Do the same for the other two. Then change the
+<code>0.5</code> inside the function to <code>0.8</code> — and notice that is the only place
+you have to touch.`,
+      solution: '# The rule now lives in exactly one place.\ndef dose_for(weight_kg):\n    return weight_kg * 0.8\n\n\n# ...but these three lines still do the maths by hand.\nprint(f"P01: {dose_for(68):.1f} mg")\nprint(f"P02: {dose_for(72):.1f} mg")\nprint(f"P03: {dose_for(55):.1f} mg")',
       checks: [
         {
-          label: "There is a function called dose_for that returns a dose",
+          label: "The rate inside the function is now 0.8",
           test: function (c) {
-            if (!/def\s+dose_for\s*\(/.test(c.code)) { return "No function called dose_for yet."; }
             var v = c.tryPy("dose_for(10)");
-            if (v === undefined || v === null) {
-              return "dose_for(10) gave nothing back. Does it say return, rather than print?";
-            }
+            if (v === undefined || v === null) { return "dose_for is not returning a number."; }
             return Math.abs(v - 8) < 0.0001 ||
-              "dose_for(10) gave " + v + ". At 0.8 mg per kg it should be 8.";
+              "dose_for(10) gives " + v + ". At 0.8 mg per kg it should be 8.";
           }
         },
         {
-          label: "The old rate is gone and the new one appears once",
+          label: "0.5 is gone, and 0.8 appears exactly once",
           test: function (c) {
             if (/\b0\.5\b/.test(c.code)) { return "0.5 is still in there somewhere."; }
             var n = (c.code.match(/\b0\.8\b/g) || []).length;
@@ -98,8 +90,18 @@ Then swap each <code>68 * 0.5</code> for <code>dose_for(68)</code>, keeping the
           }
         },
         {
+          label: "All three prints go through the function",
+          test: function (c) {
+            var calls = (c.code.match(/dose_for\s*\(/g) || []).length;
+            return calls >= 4 ||
+              "Only " + (calls - 1) + " of the three prints calls dose_for. " +
+              "(The definition counts as one mention.)";
+          }
+        },
+        {
           label: "The three doses are right",
           test: function (c) {
+            if (c.error) { return "It stopped with: " + c.error.split("\n").pop(); }
             var want = ["P01: 54.4 mg", "P02: 57.6 mg", "P03: 44.0 mg"];
             for (var i = 0; i < 3; i++) {
               if (c.outLines[i] !== want[i]) {
@@ -112,15 +114,14 @@ Then swap each <code>68 * 0.5</code> for <code>dose_for(68)</code>, keeping the
         {
           label: "Changing the rule once changes all three participants",
           test: function (c) {
-            var swapped = c.code.replace(/\b0\.8\b/, "0.5");
-            var r = c.rerun(swapped);
+            var r = c.rerun(c.code.replace(/\b0\.8\b/, "0.5"));
             if (r.error) { return "It broke: " + r.error.split("\n").pop(); }
             var want = ["P01: 34.0 mg", "P02: 36.0 mg", "P03: 27.5 mg"];
             for (var i = 0; i < 3; i++) {
               if (r.outLines[i] !== want[i]) {
                 return "Putting the rate back to 0.5 should have changed every line, but line " +
-                  (i + 1) + " came out as “" + r.outLines[i] + "”. One of them is not going " +
-                  "through the function.";
+                  (i + 1) + " came out as “" + r.outLines[i] + "”. One of them is still doing " +
+                  "the maths by hand.";
               }
             }
             return true;
@@ -136,10 +137,10 @@ Then swap each <code>68 * 0.5</code> for <code>dose_for(68)</code>, keeping the
           url: "https://docs.python.org/3/tutorial/controlflow.html#defining-functions",
           note: "The official version, including default arguments and keyword arguments in more depth." },
       ],
-      title: "Writing one: def, arguments, calling",
+      title: "The anatomy: filling in a function",
       prose: `
-<p>The anatomy, with the words named — you will see these words in every error message and
-every piece of documentation, so they are worth knowing.</p>
+<p>Now you write one — but only the inside. The name and the parameters are already there, so
+you can think about the work rather than the punctuation.</p>
 
 <pre><code>def dose_for(weight_kg):
     return weight_kg * 0.8
@@ -166,27 +167,28 @@ talking about when they say <em>"takes 1 positional argument but 2 were given"</
 <p>This catches everyone once. Running a <code>def</code> does <strong>not</strong> run the
 body. It creates the function and puts it in a box with that name, exactly like
 <code>x = 5</code> puts 5 in a box — and then waits. The body only runs when something calls
-it.</p>
+it. So a file full of <code>def</code>s and nothing else produces no output at all, and that
+is not a bug.</p>
 
-<p>So a file full of <code>def</code>s and nothing else produces no output at all, and that is
-not a bug.</p>
+<div class="note"><span class="lbl">What <code>pass</code> means</span>
+<p>Python will not accept an empty block — the indented body has to contain
+<em>something</em>. <code>pass</code> is a word that means "deliberately nothing here yet". It
+lets you write the shape of a function before you write the inside, which is exactly what the
+exercise below is. When you fill the body in, <code>pass</code> goes.</p></div>
 
 <div class="note warn"><span class="lbl">Define before you call</span>
 <p>Python still reads top to bottom, so the <code>def</code> has to run before the call. Put
 your functions at the top of the file and the code that uses them underneath. Calling a
 function above its definition gives you the chapter 5 error:
-<code>NameError: name 'dose_for' is not defined</code>.</p></div>
-
-<p>A function can take more than one parameter — just separate them with commas.</p>
+<code>NameError: name 'area_of' is not defined</code>.</p></div>
 `,
-      starter: '# Define the function here\n\n\nprint(area_of(3, 4))\nprint(area_of(10, 10))\nprint(area_of(7, 2))',
-      task: `<p>Write a function <code>area_of(width, height)</code> that returns the area of a
-rectangle. The three calls at the bottom should print <code>12</code>, <code>100</code> and
-<code>14</code>. Do not change the calls.</p>`,
-      hint: `Two lines, above the prints:
-<pre><code>def area_of(width, height):
-    return width * height</code></pre>`,
-      solution: 'def area_of(width, height):\n    return width * height\n\n\nprint(area_of(3, 4))\nprint(area_of(10, 10))\nprint(area_of(7, 2))',
+      starter: '# The shape is written for you. Replace the comment and the pass\n# with one line that hands back the answer.\ndef area_of(width, height):\n    # work out the area and give it back\n    pass\n\n\nprint(area_of(3, 4))\nprint(area_of(10, 10))\nprint(area_of(7, 2))',
+      task: `<p>Fill in the body of <code>area_of</code> so the three calls print
+<code>12</code>, <code>100</code> and <code>14</code>. One line is enough. Do not change the
+<code>def</code> line or the calls.</p>`,
+      hint: `The body is <code>return width * height</code>, indented four spaces to sit inside
+the function. Delete the <code>pass</code> once you have written it.`,
+      solution: '# The shape is written for you. Replace the comment and the pass\n# with one line that hands back the answer.\ndef area_of(width, height):\n    return width * height\n\n\nprint(area_of(3, 4))\nprint(area_of(10, 10))\nprint(area_of(7, 2))',
       checks: [
         {
           label: "The three calls print 12, 100 and 14",
@@ -206,16 +208,16 @@ rectangle. The three calls at the bottom should print <code>12</code>, <code>100
           test: function (c) {
             var v = c.tryPy("area_of(6, 9)");
             if (v === undefined || v === null) {
-              return "area_of(6, 9) gave nothing back — check that it returns.";
+              return "area_of(6, 9) gave nothing back — check that the body says return.";
             }
             return v === 54 || "area_of(6, 9) gave " + v + ", expected 54.";
           }
         },
         {
-          label: "It takes two parameters, not one",
+          label: "The pass placeholder is gone",
           test: function (c) {
-            return /def\s+area_of\s*\(\s*\w+\s*,\s*\w+\s*\)/.test(c.code) ||
-              "The definition should take two parameters, a width and a height.";
+            return !/^\s*pass\s*$/m.test(c.code) ||
+              "There is still a bare pass in there — it can go now that the body does something.";
           }
         }
       ]
@@ -312,6 +314,86 @@ brackets that belonged to print.`,
             var v = c.tryPy("celsius_to_f(37)");
             return (v !== undefined && v !== null && Math.abs(v - 98.6) < 0.0001) ||
               "celsius_to_f(37) gave " + v + ", expected 98.6.";
+          }
+        }
+      ]
+    },
+
+    {
+      id: "ch11-write-one-yourself",
+      title: "Now one from scratch",
+      prose: `
+<p>You have used a function, and you have filled one in. This time nothing is written for you.</p>
+
+<p>That step is worth taking deliberately, because the thing that trips people up is almost
+never the idea — it is the punctuation. So here is the shape, and it does not vary:</p>
+
+<pre><code>def name_of_it(parameter):
+    return something</code></pre>
+
+<ul>
+<li><code>def</code>, then the name, then the parameters in brackets, then a
+<strong>colon</strong>.</li>
+<li>The body is <strong>indented four spaces</strong>. Press Tab; the editor does it.</li>
+<li><code>return</code> hands the answer back.</li>
+<li>Then an unindented blank line, and the rest of your file carries on.</li>
+</ul>
+
+<p>If you get it wrong, the error will tell you which bit: a missing colon is
+<code>SyntaxError: expected ':'</code>, and a body that is not indented is
+<code>IndentationError: expected an indented block</code>. Neither is a disaster — read it,
+fix it, run again.</p>
+`,
+      starter: '# Write the whole function this time. It takes a list of numbers\n# and hands back their mean.\n\n\n\nprint(mean_of([2, 4, 6]))\nprint(mean_of([10, 20, 30, 40]))\nprint(mean_of([5]))',
+      task: `<p>Write a function called <code>mean_of</code> that takes one parameter — a list
+of numbers — and returns their mean. The three calls should print <code>4.0</code>,
+<code>25.0</code> and <code>5.0</code>. Do not change the calls.</p>`,
+      hint: `You need <code>sum()</code> and <code>len()</code> from chapter 8:
+<pre><code>def mean_of(values):
+    return sum(values) / len(values)</code></pre>
+Write it above the three prints, since a function must be defined before it is called.`,
+      solution: '# Write the whole function this time. It takes a list of numbers\n# and hands back their mean.\ndef mean_of(values):\n    return sum(values) / len(values)\n\n\nprint(mean_of([2, 4, 6]))\nprint(mean_of([10, 20, 30, 40]))\nprint(mean_of([5]))',
+      checks: [
+        {
+          label: "There is a function called mean_of",
+          test: function (c) {
+            if (c.error && /NameError/.test(c.error)) {
+              return "mean_of does not exist yet — or it is defined below the calls, and " +
+                "Python reads top to bottom.";
+            }
+            return /def\s+mean_of\s*\(/.test(c.code) || "Define it with def mean_of(values):";
+          }
+        },
+        {
+          label: "The three calls print 4.0, 25.0 and 5.0",
+          test: function (c) {
+            if (c.error) { return "It stopped with: " + c.error.split("\n").pop(); }
+            var want = ["4.0", "25.0", "5.0"];
+            for (var i = 0; i < 3; i++) {
+              if (c.outLines[i] !== want[i]) {
+                return "Line " + (i + 1) + " was “" + c.outLines[i] + "”, expected “" + want[i] + "”.";
+              }
+            }
+            return true;
+          }
+        },
+        {
+          label: "It returns the mean rather than printing it",
+          test: function (c) {
+            var v = c.tryPy("mean_of([1, 2, 3, 4])");
+            if (v === undefined || v === null) {
+              return "mean_of([1, 2, 3, 4]) handed back nothing. Does the body say return?";
+            }
+            return Math.abs(v - 2.5) < 0.0001 ||
+              "mean_of([1, 2, 3, 4]) gave " + v + ", expected 2.5.";
+          }
+        },
+        {
+          label: "It works on a list it has never seen",
+          test: function (c) {
+            var v = c.tryPy("mean_of([100, 200])");
+            return (v !== undefined && v !== null && Math.abs(v - 150) < 0.0001) ||
+              "mean_of([100, 200]) gave " + v + ", expected 150.";
           }
         }
       ]
