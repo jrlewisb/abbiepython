@@ -243,11 +243,16 @@
         flushStreams();
         var captured = stdoutBuf.join("");
         stdoutBuf = saved;
+        function subPy(expr) {
+          return toJs(pyodide.runPython(expr, { globals: ns2 }));
+        }
         var sub = {
           error: err,
           stdout: captured,
           out: norm(captured),
           outLines: lines(captured),
+          py: subPy,
+          tryPy: function (expr) { try { return subPy(expr); } catch (e) { return undefined; } },
           get: function (name) {
             try {
               var v = toJs(pyodide.runPython(name, { globals: ns2 }));

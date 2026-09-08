@@ -60,6 +60,12 @@ function makeCtx(code) {
         stdout: r.stdout,
         out: norm(r.stdout),
         outLines: lines(r.stdout),
+        py: (expr) => {
+          const q = pyrun(codeText, expr);
+          if (!q.ok) { throw new Error("python could not evaluate " + expr); }
+          return q.value;
+        },
+        tryPy: (expr) => { const q = pyrun(codeText, expr); return q.ok ? q.value : undefined; },
         get: (name) => { const q = pyrun(codeText, name); return q.ok ? q.value : undefined; }
       };
     }
