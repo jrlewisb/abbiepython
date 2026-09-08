@@ -47,20 +47,69 @@ that line out and run again.</p>
       title: "f-strings: the good way to build text",
       prose: `
 <p>Gluing with <code>+</code> gets ugly fast, and it breaks the moment a number is involved.
-The modern way is an <strong>f-string</strong>: put an <code>f</code> immediately before the
-opening quote, and then anything inside curly braces is evaluated and dropped into the text.</p>
+The modern way is an <strong>f-string</strong>, and it is worth taking slowly, because it has
+a small amount of punctuation doing a lot of work — and you will then see it everywhere for
+the rest of this course.</p>
+
+<h3>The anatomy</h3>
 
 <pre><code>name = "Ada"
 age = 36
+
 print(f"{name} is {age} years old")     # Ada is 36 years old</code></pre>
 
-<p>Anything can go in the braces — a variable, a calculation, a function call:</p>
+<p>Three pieces:</p>
 
-<pre><code>print(f"next year she is {age + 1}")</code></pre>
+<ul>
+<li><strong>The <code>f</code></strong> goes immediately before the opening quote, with no
+space. It is what tells Python "this is not an ordinary string — look inside it". Leave it off
+and you get the literal text <code>{name} is {age} years old</code>, braces and all, which is
+the usual symptom of a forgotten <code>f</code>.</li>
+<li><strong>The curly braces</strong> mark a hole in the text. Whatever is inside gets worked
+out and dropped in.</li>
+<li><strong>Everything outside the braces</strong> is ordinary text, printed exactly as
+written — including the spaces, which is why <code>is</code> has one on each side.</li>
+</ul>
 
-<p>You can also format numbers inside the braces. <code>{value:.2f}</code> means "as a
-decimal number with 2 places", which is how you stop 0.30000000000000004 appearing in your
-results table.</p>
+<p>Anything can go in the braces, not just a variable name — any expression at all:</p>
+
+<pre><code>print(f"next year she is {age + 1}")
+print(f"the mean is {sum(values) / len(values)}")</code></pre>
+
+<h3>Why not just use commas?</h3>
+
+<p><code>print("Ada", "is", 36)</code> works, and you have been doing it. But
+<code>print</code> always puts exactly one space between the items, so the moment you want
+<code>P07_night1.csv</code> or <code>87.3%</code> you are stuck. An f-string lets you control
+every character.</p>
+
+<h3>The colon: formatting a number</h3>
+
+<p>Inside the braces, a colon introduces instructions about <em>how</em> to display the
+value:</p>
+
+<pre><code>value = 0.8733333
+
+f"{value}"          # 0.8733333        — everything
+f"{value:.2f}"      # 0.87             — as a decimal, 2 places
+f"{value:.1f}"      # 0.9              — 1 place, rounded
+
+n = 7
+f"{n:02d}"          # 07               — whole number, padded to 2 digits with zeros
+f"{n:03d}"          # 007</code></pre>
+
+<p>Read <code>{value:.2f}</code> as "value, shown as a <strong>f</strong>loat to
+<strong>2</strong> decimal places", and <code>{n:02d}</code> as "n, as a whole number
+(<strong>d</strong>igits), at least <strong>2</strong> wide, padded with <strong>0</strong>".</p>
+
+<p>You will use these two constantly: <code>.2f</code> to stop
+<code>0.30000000000000004</code> appearing in a results table, and <code>02d</code> to make
+<code>sub07</code> sort correctly next to <code>sub12</code>.</p>
+
+<div class="note"><span class="lbl">If it looks like a lot at once</span>
+<p>It is. You do not have to memorise the formatting codes — you will look them up for years,
+and so does everybody else. What matters now is recognising the shape: <code>f</code>, braces
+for holes, colon for how to display it.</p></div>
 `,
       starter: 'participant = "P07"\ntrials = 240\naccuracy = 0.8733333\n\nprint("participant " + participant)\n',
       task: `<p>Replace that print with a single f-string that prints exactly:</p>

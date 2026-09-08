@@ -88,13 +88,13 @@ actually do it.</p></div>
 
 <p>Run the code to see what a list can do, then answer the question below it.</p>
 `,
-      starter: 'readings = [12, 7, 40]\n\npublic_methods = [name for name in dir(readings) if not name.startswith("_")]\nprint(public_methods)\n\n# A list has a method for counting how many times a value appears.\n# Use it to count how many 7s are in this list.\nsevens = 0\n\nprint(sevens)',
+      starter: 'readings = [12, 7, 40]\n\n# Print every name a list has, skipping Python\'s internal ones.\nfor name in dir(readings):\n    if not name.startswith("_"):\n        print(name)\n\n# A list has a method for counting how many times a value appears.\n# Use it to count how many 7s are in this list.\nsevens = 0\n\nprint("sevens:", sevens)',
       task: `<p>Look at the printed list of what a list can do, find the method that counts
-occurrences, and use it to set <code>sevens</code>. The output's last line should be
-<code>1</code>.</p>`,
+occurrences, and use it to set <code>sevens</code>. The last line of output should be
+<code>sevens: 1</code>.</p>`,
       hint: `The method is called <code>count</code>, and you call it as
 <code>readings.count(7)</code>.`,
-      solution: 'readings = [12, 7, 40]\n\npublic_methods = [name for name in dir(readings) if not name.startswith("_")]\nprint(public_methods)\n\n# A list has a method for counting how many times a value appears.\n# Use it to count how many 7s are in this list.\nsevens = readings.count(7)\n\nprint(sevens)',
+      solution: 'readings = [12, 7, 40]\n\n# Print every name a list has, skipping Python\'s internal ones.\nfor name in dir(readings):\n    if not name.startswith("_"):\n        print(name)\n\n# A list has a method for counting how many times a value appears.\n# Use it to count how many 7s are in this list.\nsevens = readings.count(7)\n\nprint("sevens:", sevens)',
       checks: [
         {
           label: "sevens is 1",

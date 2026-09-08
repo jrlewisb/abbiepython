@@ -382,7 +382,7 @@
         var b = el("button", null,
           '<span class="tick">' + (state.done[st.key] ? "✓" : "") + "</span>" +
           "<span>" + st.title + "</span>" +
-          (st.checks ? '<span class="kind">task</span>' : ""));
+          (st.checks ? '<span class="kind">' + (st.kind || "task") + "</span>" : ""));
         if (current === st) { b.classList.add("current"); }
         b.addEventListener("click", function () { go(st.flat); });
         steps.appendChild(b);
@@ -617,6 +617,96 @@
     });
   }
 
+  /* ---------- cheatsheet drawer ---------- */
+
+  var SHEET_KEY = "abbie-python-cheatsheet-open";
+
+  function buildCheatsheet() {
+    var data = window.CHEATSHEET || [];
+    if (!data.length) { return; }
+
+    var toggle = el("button", null, "Cheatsheet<span class='k'>?</span>");
+    toggle.id = "sheet-toggle";
+    document.body.appendChild(toggle);
+
+    var sheet = el("div", null,
+      '<div class="head">' +
+        '<div class="row"><h2>Cheatsheet</h2><button class="close" title="Close">\u00d7</button></div>' +
+        '<div class="hint">Every entry links back to where it was taught.</div>' +
+        '<input class="filter" type="search" placeholder="Filter — try “loop”, “dict”, “axis”">' +
+      '</div><div class="body"></div>');
+    sheet.id = "sheet";
+    document.body.appendChild(sheet);
+
+    var body = $(".body", sheet);
+    var filter = $("input.filter", sheet);
+
+    data.forEach(function (section) {
+      var sec = el("div", "sec");
+      sec.appendChild(el("h3", null, section.title));
+      if (section.note) { sec.appendChild(el("p", "secnote", section.note)); }
+      (section.items || []).forEach(function (item) {
+        var row = el("div", "item");
+        var pre = el("pre", null, window.PyEditor.highlight(item.code));
+        row.appendChild(pre);
+        if (item.note) { row.appendChild(el("span", "n", item.note)); }
+        if (item.at) {
+          var chap = (item.at.match(/^ch(\d+)/) || [])[1];
+          var link = el("a", "at", "chapter " + (chap ? parseInt(chap, 10) : "?") + " \u2197");
+          link.href = "#" + item.at;
+          link.addEventListener("click", function () { setOpen(false); });
+          row.appendChild(document.createTextNode(" "));
+          row.appendChild(link);
+        }
+        row.dataset.hay = ((item.code || "") + " " + (item.note || "") + " " +
+          section.title).toLowerCase();
+        sec.appendChild(row);
+      });
+      body.appendChild(sec);
+    });
+
+    var noMatch = el("div", "empty", "Nothing matches that.");
+    noMatch.style.display = "none";
+    body.appendChild(noMatch);
+
+    filter.addEventListener("input", function () {
+      var q = filter.value.trim().toLowerCase();
+      var anyShown = false;
+      Array.prototype.forEach.call(body.querySelectorAll(".sec"), function (sec) {
+        var shown = 0;
+        Array.prototype.forEach.call(sec.querySelectorAll(".item"), function (item) {
+          var hit = !q || item.dataset.hay.indexOf(q) >= 0;
+          item.classList.toggle("hidden", !hit);
+          if (hit) { shown++; }
+        });
+        sec.classList.toggle("hidden", shown === 0);
+        if (shown) { anyShown = true; }
+      });
+      noMatch.style.display = anyShown ? "none" : "block";
+    });
+
+    function setOpen(open) {
+      sheet.classList.toggle("open", open);
+      toggle.textContent = open ? "Close" : "Cheatsheet";
+      if (!open) { toggle.innerHTML = "Cheatsheet<span class='k'>?</span>"; }
+      try { localStorage.setItem(SHEET_KEY, open ? "1" : "0"); } catch (e) { /* ignore */ }
+      if (open) { filter.focus(); }
+    }
+
+    toggle.addEventListener("click", function () { setOpen(!sheet.classList.contains("open")); });
+    $(".close", sheet).addEventListener("click", function () { setOpen(false); });
+
+    document.addEventListener("keydown", function (e) {
+      var typing = /^(INPUT|TEXTAREA)$/.test((e.target && e.target.tagName) || "");
+      if (e.key === "Escape" && sheet.classList.contains("open")) { setOpen(false); return; }
+      if (e.key === "?" && !typing) { e.preventDefault(); setOpen(!sheet.classList.contains("open")); }
+    });
+
+    try {
+      if (localStorage.getItem(SHEET_KEY) === "1") { setOpen(true); }
+    } catch (e) { /* ignore */ }
+  }
+
   /* ---------- routing ---------- */
 
   function go(flatIndex) {
@@ -658,6 +748,7 @@
     }
 
     boot.classList.add("hidden");
+    buildCheatsheet();
 
     /* Hook for the Playwright suite. It drives the real interpreter and the
        real checks rather than clicking through every step. Nothing in the app

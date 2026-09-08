@@ -159,6 +159,30 @@ not an empty string — it is the absence of a value. You will see it constantly
 that does not return anything actually returns <code>None</code>, and a missing entry in a
 data file often comes through as <code>None</code>.</p></div>
 
+<h3>Checking for None: use <code>is</code>, not <code>==</code></h3>
+
+<p>There is one comparison that breaks the pattern, and you will see it constantly from the
+next chapter onwards:</p>
+
+<pre><code>if value is None:
+    ...
+if value is not None:
+    ...</code></pre>
+
+<p><code>is</code> asks a subtly different question from <code>==</code>. <code>==</code> asks
+"are these two things equal?"; <code>is</code> asks "are these two names pointing at the very
+same object?"</p>
+
+<p>For <code>None</code> that distinction matters, because there is only ever <em>one</em>
+<code>None</code> in the whole of Python. So <code>is None</code> is exact and cannot be
+fooled, whereas <code>== None</code> asks a question that some values are entitled to answer
+however they like. They usually agree; when they disagree, <code>is</code> is right.</p>
+
+<p>The rule is simple and worth adopting without further thought: <strong>use
+<code>is None</code> and <code>is not None</code>, always.</strong> For everything else, use
+<code>==</code>. Watch out for the word order in the negative — it is
+<code>is not None</code>, not <code>is None not</code>.</p>
+
 <p>The <code>bool()</code> function shows you what Python thinks of any value. Run this.</p>
 `,
       starter: 'print(bool(0))\nprint(bool(42))\nprint(bool(""))\nprint(bool("no"))\nprint(bool([]))\nprint(bool(None))'

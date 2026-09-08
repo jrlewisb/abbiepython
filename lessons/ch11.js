@@ -501,7 +501,7 @@ dictionary with four keys:</p>
 <code>if / elif / else</code> like chapter 9's. Keep a running <code>total</code> for the
 valid ones, and after the loop guard the division with
 <code>if valid > 0:</code>. Then <code>return {"missing": missing, ...}</code>.`,
-      solution: 'def summarise(amplitudes, clip_at=300):\n    missing = 0\n    clipped = 0\n    valid = 0\n    total = 0\n\n    for amplitude in amplitudes:\n        if amplitude is None:\n            missing += 1\n        elif amplitude >= clip_at:\n            clipped += 1\n        else:\n            valid += 1\n            total += amplitude\n\n    mean = total / valid if valid > 0 else 0\n\n    return {"missing": missing, "clipped": clipped, "valid": valid, "mean": mean}\n\n\nnight = [22.5, 41.0, None, 380.0, 18.2, None, 55.5, 402.1, 30.0]\nresult = summarise(night)\n\nprint(result["valid"], result["clipped"], result["missing"])\nprint(f"{result[\'mean\']:.2f}")',
+      solution: 'def summarise(amplitudes, clip_at=300):\n    missing = 0\n    clipped = 0\n    valid = 0\n    total = 0\n\n    for amplitude in amplitudes:\n        if amplitude is None:\n            missing += 1\n        elif amplitude >= clip_at:\n            clipped += 1\n        else:\n            valid += 1\n            total += amplitude\n\n    mean = 0\n    if valid > 0:\n        mean = total / valid\n\n    return {"missing": missing, "clipped": clipped, "valid": valid, "mean": mean}\n\n\nnight = [22.5, 41.0, None, 380.0, 18.2, None, 55.5, 402.1, 30.0]\nresult = summarise(night)\n\nprint(result["valid"], result["clipped"], result["missing"])\nprint(f"{result[\'mean\']:.2f}")',
       checks: [
         {
           label: "The counts and mean are right for this recording",
