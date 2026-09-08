@@ -141,3 +141,43 @@ Superseded keys are left in place rather than pruned. They are a few bytes each,
 would risk wiping real progress if a lesson file happened to 404 mid-deploy.
 
 `node tools/check-lessons.js` fails if an id is missing or duplicated.
+
+### What the offline checker cannot catch
+
+`tools/check-lessons.js` runs the lessons against the CPython on this machine, which is the
+right way to verify the exercises but is *not* the environment Abbie uses. Anything specific to
+Pyodide-in-a-browser has to be checked by loading the deployed page and running code in it.
+
+One real example, found that way: Pyodide's `setStdout({ batched })` strips the newline from
+every chunk, so multi-line output arrived concatenated and line-by-line checks all failed —
+while the offline checker passed 37/37. The engine now uses the byte-level `write` handler
+instead. If you touch stdout handling, test it in a browser, not here.
+
+## Letting Claude push (autonomous loop)
+
+Claude can write files into this folder but has no network and no credentials —
+`device_bash` is an isolated Linux VM with the folder mounted, not your Mac. So the push
+runs on your side instead, and your GitHub credentials never leave your machine.
+
+**One-time setup.** In a terminal tab you leave open:
+
+```bash
+cd /Users/josh/abbiepython
+./tools/claude-push.sh
+```
+
+It polls every five seconds. When Claude writes `.claude-push-request` (containing a commit
+message), the script commits everything, pushes to the **`claude/work`** branch, and writes
+`.claude-push-result` so Claude can see whether it worked. All three files are gitignored.
+
+**Why a work branch and not main.** GitHub Pages serves `main`, which is what Abbie is
+reading. `.github/workflows/promote.yml` runs the full Playwright suite against
+`claude/work` and fast-forwards `main` only if it passes. So Claude can work unattended
+without a broken build reaching her — which has already happened once, when three
+Pyodide-only bugs shipped to the live site.
+
+If main has moved on independently, promotion stops and asks you to merge by hand rather
+than clobbering your work.
+
+To stop the loop, Ctrl-C the script. Nothing is pushed while it is not running; requests
+just queue up in the file.

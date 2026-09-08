@@ -1,0 +1,14 @@
+{
+  "name": "abbiepython",
+  "version": "1.0.0",
+  "private": true,
+  "description": "An interactive Python workbook that runs real Python in the browser",
+  "scripts": {
+    "lessons": "node tools/check-lessons.js",
+    "test": "playwright test",
+    "test:headed": "playwright test --headed"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.47.0"
+  }
+}

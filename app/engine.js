@@ -89,9 +89,31 @@
     }
     if (!pyodide) { throw lastErr || new Error("Python could not be loaded"); }
 
-    pyodide.setStdout({ batched: function (s) { stdoutBuf.push(s); } });
-    pyodide.setStderr({ batched: function (s) { stderrBuf.push(s); } });
+    /* Use the byte-level writer, NOT { batched: ... }. The batched callback
+       strips the trailing newline from every chunk, so multi-line output comes
+       back concatenated ("onetwo three2026") and every check that looks at
+       individual lines fails. Only shows up in a real browser — the offline
+       lesson checker runs CPython directly and never sees it. */
+    var outDecoder = new TextDecoder();
+    var errDecoder = new TextDecoder();
+    pyodide.setStdout({
+      write: function (buf) {
+        stdoutBuf.push(outDecoder.decode(buf, { stream: true }));
+        return buf.length;
+      }
+    });
+    pyodide.setStderr({
+      write: function (buf) {
+        stderrBuf.push(errDecoder.decode(buf, { stream: true }));
+        return buf.length;
+      }
+    });
     pyodide.runPython("import os; os.environ['MPLBACKEND'] = 'AGG'");
+  }
+
+  function flushStreams() {
+    try { pyodide.runPython("import sys; sys.stdout.flush(); sys.stderr.flush()"); }
+    catch (e) { /* nothing buffered */ }
   }
 
   function toJs(v) {
@@ -105,15 +127,24 @@
     return v;
   }
 
+  /* Pyodide prefixes every traceback with three frames from its own
+     _base.py. Showing those to a beginner is cruel and teaches the wrong
+     reading habit, so keep the header, then everything from the first frame
+     in her own code onward, with the meaningless File "<exec>" removed. */
   function cleanTraceback(msg) {
-    var keep = [];
-    String(msg).split("\n").forEach(function (l) {
-      if (/File "\/lib\/python/.test(l)) { return; }
-      if (/pyodide\/_pyodide/.test(l)) { return; }
-      if (/^\s*File "<exec>"/.test(l)) { l = l.replace('File "<exec>", ', ""); }
-      keep.push(l);
+    var raw = String(msg).replace(/\s+$/, "").split("\n");
+    var start = -1;
+    for (var i = 0; i < raw.length; i++) {
+      if (raw[i].indexOf('File "<exec>"') >= 0) { start = i; break; }
+    }
+    var body = start >= 0 ? raw.slice(start) : raw.filter(function (l) {
+      return l.indexOf("/lib/python") < 0 && l.indexOf("_pyodide") < 0;
     });
-    return keep.join("\n").trim();
+    var out = body.map(function (l) {
+      return l.replace('File "<exec>", ', "").replace('File "<exec>"', "line");
+    });
+    if (/^Traceback/.test(raw[0]) && start >= 0) { out.unshift(raw[0]); }
+    return out.join("\n").trim();
   }
 
   var PLOT_SNIPPET = [
@@ -153,6 +184,7 @@
       result.error = cleanTraceback(e.message || String(e));
     }
 
+    flushStreams();
     result.stdout = stdoutBuf.join("");
     result.stderr = stderrBuf.join("");
 
@@ -170,6 +202,14 @@
     function py(expr) {
       return toJs(pyodide.runPython(expr, { globals: ns }));
     }
+    /* Pyodide converts Python None to JavaScript undefined, which is also what
+       a missing variable looks like. Checks need to tell those apart, so a
+       variable that exists and holds None comes back as null — matching what
+       the offline checker returns for the same code. */
+    function hasName(name) {
+      try { return !!pyodide.runPython("'" + name + "' in globals()", { globals: ns }); }
+      catch (e) { return false; }
+    }
     return {
       stdout: run.stdout,
       out: norm(run.stdout),
@@ -180,11 +220,14 @@
       code: run.code,
       py: py,
       tryPy: function (expr) { try { return py(expr); } catch (e) { return undefined; } },
-      get: function (name) { try { return py(name); } catch (e) { return undefined; } },
-      has: function (name) {
-        try { return !!pyodide.runPython("'" + name + "' in globals()", { globals: ns }); }
-        catch (e) { return false; }
+      get: function (name) {
+        try {
+          var v = py(name);
+          if (v === undefined && hasName(name)) { return null; }
+          return v;
+        } catch (e) { return undefined; }
       },
+      has: hasName,
       printed: function (what) { return lines(run.stdout).indexOf(String(what).trim()) >= 0; },
       codeHas: function (re) { return re instanceof RegExp ? re.test(run.code) : run.code.indexOf(re) >= 0; },
       /* Re-run a modified copy of her code in a brand new namespace.
@@ -197,6 +240,7 @@
         var err = null;
         try { pyodide.runPython(codeText, { globals: ns2 }); }
         catch (e) { err = cleanTraceback(e.message || String(e)); }
+        flushStreams();
         var captured = stdoutBuf.join("");
         stdoutBuf = saved;
         var sub = {
@@ -205,13 +249,41 @@
           out: norm(captured),
           outLines: lines(captured),
           get: function (name) {
-            try { return toJs(pyodide.runPython(name, { globals: ns2 })); }
-            catch (e) { return undefined; }
+            try {
+              var v = toJs(pyodide.runPython(name, { globals: ns2 }));
+              if (v === undefined) {
+                var there = pyodide.runPython("'" + name + "' in globals()", { globals: ns2 });
+                if (there) { return null; }
+              }
+              return v;
+            } catch (e) { return undefined; }
           }
         };
         return sub;
       }
     };
+  }
+
+  /* Run a step's checks against a completed run. Used by the UI and by the
+     browser test suite, so the two can never disagree about what passing means. */
+  function evaluateChecks(step, run) {
+    var ctx = run.ns ? makeCtx(run) : null;
+    return (step.checks || []).map(function (c) {
+      var ok = false, why = "";
+      if (!ctx) {
+        why = "Your code could not run at all.";
+      } else {
+        try {
+          var r = c.test(ctx);
+          if (r === true) { ok = true; }
+          else if (typeof r === "string") { why = r; }
+          else { ok = !!r; }
+        } catch (e) {
+          why = "This check could not run: " + (e.message || e);
+        }
+      }
+      return { label: c.label, ok: ok, why: why || c.why || "" };
+    });
   }
 
   /* ---------- flatten the curriculum ---------- */
@@ -454,28 +526,15 @@
 
         // ---- checks
         if (step.checks) {
-          var ctx = run.ns ? makeCtx(run) : null;
+          var results = evaluateChecks(step, run);
           var ul2 = $("ul", checksBox);
           ul2.innerHTML = "";
           var allPass = true;
-          step.checks.forEach(function (c) {
-            var ok = false, why = "";
-            if (!ctx) {
-              why = "Your code could not run at all.";
-            } else {
-              try {
-                var r = c.test(ctx);
-                if (r === true) { ok = true; }
-                else if (typeof r === "string") { why = r; }
-                else { ok = !!r; }
-              } catch (e) {
-                why = "This check could not run: " + (e.message || e);
-              }
-            }
-            if (!ok) { allPass = false; }
-            var li = el("li", ok ? "pass" : "fail",
-              '<span class="mark">' + (ok ? "✓" : "✕") + "</span><span>" + c.label +
-              (!ok && (why || c.why) ? '<span class="why">' + (why || c.why) + "</span>" : "") +
+          results.forEach(function (r) {
+            if (!r.ok) { allPass = false; }
+            var li = el("li", r.ok ? "pass" : "fail",
+              '<span class="mark">' + (r.ok ? "✓" : "✕") + "</span><span>" + r.label +
+              (!r.ok && r.why ? '<span class="why">' + r.why + "</span>" : "") +
               "</span>");
             ul2.appendChild(li);
           });
@@ -594,6 +653,36 @@
     }
 
     boot.classList.add("hidden");
+
+    /* Hook for the Playwright suite. It drives the real interpreter and the
+       real checks rather than clicking through every step. Nothing in the app
+       reads this, and it is inert unless a test calls it. */
+    window.__workbook = {
+      steps: FLAT.map(function (st) {
+        return { id: st.id, key: st.key, title: st.title, chapter: st.chapter.id,
+                 graded: !!st.checks, hasSolution: !!st.solution,
+                 starter: st.starter || "", solution: st.solution || "" };
+      }),
+      run: async function (code) {
+        var r = await runCode(code);
+        var o = { stdout: r.stdout, stderr: r.stderr, error: r.error };
+        if (r.ns && r.ns.destroy) { try { r.ns.destroy(); } catch (e) { /* ignore */ } }
+        return o;
+      },
+      grade: async function (stepId, code) {
+        var step = null;
+        for (var i = 0; i < FLAT.length; i++) {
+          if (FLAT[i].id === stepId) { step = FLAT[i]; break; }
+        }
+        if (!step) { throw new Error("no such step: " + stepId); }
+        var src = code == null ? (step.starter || "") : code;
+        var r = await runCode(src);
+        r.code = src;
+        var results = evaluateChecks(step, r);
+        if (r.ns && r.ns.destroy) { try { r.ns.destroy(); } catch (e) { /* ignore */ } }
+        return { stdout: r.stdout, error: r.error, checks: results };
+      }
+    };
     var i = stepFromHash();
     if (i < 0) {
       // resume where she left off: first step not yet ticked

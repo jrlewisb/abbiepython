@@ -1,0 +1,58 @@
+name: promote to main
+
+# Claude pushes to claude/work. This runs the full browser suite there and only
+# fast-forwards main — the branch GitHub Pages serves to Abbie — when it passes.
+# Delete this file if you would rather promote by hand.
+
+on:
+  push:
+    branches: [claude/work]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  verify:
+    name: browser suite before promoting
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: node tools/check-lessons.js
+      - run: npm install
+      - run: npx playwright install --with-deps chromium
+      - run: npx playwright test
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+
+  promote:
+    name: fast-forward main
+    needs: verify
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Fast-forward main to the tested commit
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main
+          # only promote if main has not moved on independently
+          if git merge-base --is-ancestor origin/main "$GITHUB_SHA"; then
+            git push origin "$GITHUB_SHA:main"
+            echo "main fast-forwarded to $GITHUB_SHA"
+          else
+            echo "main has commits that claude/work does not — not promoting."
+            echo "Merge by hand: git checkout main && git merge claude/work"
+            exit 1
+          fi
