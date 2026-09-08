@@ -44,6 +44,14 @@ that line out and run again.</p>
 
     {
       id: "ch04-f-strings-good-way",
+      reading: [
+        { title: "Fancier output formatting",
+          url: "https://docs.python.org/3/tutorial/inputoutput.html",
+          note: "The official run-through of f-strings and the formatting codes that go after the colon." },
+        { title: "String methods, all of them",
+          url: "https://docs.python.org/3/library/stdtypes.html#string-methods",
+          note: "The full list. Worth a skim once so you know what exists — you will come back to it constantly." },
+      ],
       title: "f-strings: the good way to build text",
       prose: `
 <p>Gluing with <code>+</code> gets ugly fast, and it breaks the moment a number is involved.

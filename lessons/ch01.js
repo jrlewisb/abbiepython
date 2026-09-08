@@ -6,6 +6,11 @@ WB.chapter({
 
     {
       id: "ch01-this-thing",
+      reading: [
+        { title: "Automate the Boring Stuff with Python",
+          url: "https://automatetheboringstuff.com/",
+          note: "A whole beginner's book, free to read online. Al Sweigart writes for people who are not programmers and have a job to do. If you want a second voice explaining the same things, start here." },
+      ],
       title: "What this thing is",
       prose: `
 <p>Welcome. Before any code, one paragraph on what you are actually about to learn, because

@@ -6,6 +6,11 @@ WB.chapter({
 
     {
       id: "ch07-if-indentation-point",
+      reading: [
+        { title: "More control flow tools",
+          url: "https://docs.python.org/3/tutorial/controlflow.html",
+          note: "if, for, while and friends, from the official tutorial." },
+      ],
       title: "if, and why the indentation is the point",
       prose: `
 <p>Back to the recipe from chapter 1. Real recipes are not just a straight list of steps —

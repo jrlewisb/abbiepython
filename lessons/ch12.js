@@ -48,6 +48,14 @@ tells you, in order: what went wrong, and where.</p>
 
     {
       id: "ch12-reading-a-traceback",
+      reading: [
+        { title: "Errors and exceptions",
+          url: "https://docs.python.org/3/tutorial/errors.html",
+          note: "The official chapter on tracebacks, try/except and the exception types." },
+        { title: "Built-in exceptions, listed",
+          url: "https://docs.python.org/3/library/exceptions.html",
+          note: "When you meet an error type this workbook has not covered, it is defined here." },
+      ],
       title: "How to read a traceback",
       prose: `
 <p>Here is a real one. It looks like a lot. It is actually three facts and some scaffolding.</p>

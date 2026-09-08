@@ -135,6 +135,11 @@ appear anywhere in the file, and 68 should appear exactly once.`,
 
     {
       id: "ch02-label-on-box",
+      reading: [
+        { title: "The Python Tutorial: an informal introduction",
+          url: "https://docs.python.org/3/tutorial/introduction.html",
+          note: "The official tutorial's first chapter. Denser than this workbook, but it is the source of truth and worth getting used to." },
+      ],
       title: "A label on a box",
       prose: `
 <p>Now the mechanics, which are mercifully simple.</p>

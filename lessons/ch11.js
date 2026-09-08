@@ -131,6 +131,11 @@ Then swap each <code>68 * 0.5</code> for <code>dose_for(68)</code>, keeping the
 
     {
       id: "ch11-def-and-calling",
+      reading: [
+        { title: "Defining functions",
+          url: "https://docs.python.org/3/tutorial/controlflow.html#defining-functions",
+          note: "The official version, including default arguments and keyword arguments in more depth." },
+      ],
       title: "Writing one: def, arguments, calling",
       prose: `
 <p>The anatomy, with the words named — you will see these words in every error message and

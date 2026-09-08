@@ -6,6 +6,11 @@ WB.chapter({
 
     {
       id: "ch06-asking-questions-about-values",
+      reading: [
+        { title: "Truth value testing",
+          url: "https://docs.python.org/3/library/stdtypes.html#truth-value-testing",
+          note: "The official rule for what counts as True and what counts as False." },
+      ],
       title: "Asking questions about values",
       prose: `
 <p>So far your code has <em>stated</em> things: this variable is 68, that one is "P07". Now

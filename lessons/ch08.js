@@ -6,6 +6,11 @@ WB.chapter({
 
     {
       id: "ch08-many-values-one-name",
+      reading: [
+        { title: "Data structures",
+          url: "https://docs.python.org/3/tutorial/datastructures.html",
+          note: "Lists, dictionaries, tuples and sets in one place, with every method they have." },
+      ],
       title: "Many values, one name",
       prose: `
 <p>Every variable so far has held exactly one thing. That is fine for a weight or a subject

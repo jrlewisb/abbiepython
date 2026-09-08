@@ -188,6 +188,11 @@ being read like an attribute.</p>`,
 
     {
       id: "ch13-your-own-class",
+      reading: [
+        { title: "Classes",
+          url: "https://docs.python.org/3/tutorial/classes.html",
+          note: "Goes considerably further than this chapter. Skim it now; come back when you actually need to write one." },
+      ],
       title: "Making your own kind of thing",
       prose: `
 <p>You will spend far more time using other people's objects than writing your own. But seeing

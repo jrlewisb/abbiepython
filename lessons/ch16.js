@@ -6,6 +6,11 @@ WB.chapter({
 
     {
       id: "ch16-why-numpy",
+      reading: [
+        { title: "NumPy: the absolute basics for beginners",
+          url: "https://numpy.org/doc/stable/user/absolute_beginners.html",
+          note: "Written for exactly where you are now, and covers reshaping, broadcasting and saving arrays, which this chapter does not." },
+      ],
       title: "Why lists stop being enough",
       prose: `
 <p>Everything so far has used lists, and lists are excellent — for a few dozen things. Now
@@ -357,6 +362,11 @@ Or write <code>signal[np.abs(signal) < 300]</code> directly.`,
 
     {
       id: "ch16-axes",
+      reading: [
+        { title: "Indexing on ndarrays",
+          url: "https://numpy.org/doc/stable/user/basics.indexing.html",
+          note: "Every way of getting at parts of an array. Worth a look when a slice does not do what you expected." },
+      ],
       title: "More than one dimension, and what axis means",
       prose: `
 <p>Real data is rarely a single line of numbers. Six EEG channels recorded together is a

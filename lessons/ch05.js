@@ -6,6 +6,11 @@ WB.chapter({
 
     {
       id: "ch05-one-line-at-time",
+      reading: [
+        { title: "Python Tutor — watch your code run",
+          url: "https://pythontutor.com/",
+          note: "Paste code in and step through it one line at a time, watching the variables change. If the model in this chapter has not quite clicked, this is the single best thing on the internet for making it click." },
+      ],
       title: "One line at a time, top to bottom",
       prose: `
 <p>This chapter has no new syntax in it. It is about building the right picture in your head

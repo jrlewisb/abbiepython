@@ -6,6 +6,14 @@ WB.chapter({
 
     {
       id: "ch14-why-modules",
+      reading: [
+        { title: "The Python Standard Library",
+          url: "https://docs.python.org/3/library/index.html",
+          note: "Everything that ships with Python. Enormous — do not read it, search it when you have a problem." },
+        { title: "Modules",
+          url: "https://docs.python.org/3/tutorial/modules.html",
+          note: "How imports work, and how to split your own code across files once one script gets too big." },
+      ],
       title: "Somebody has already written it",
       prose: `
 <p>In chapter 8 you worked out a mean with <code>sum(readings) / len(readings)</code>. That

@@ -6,6 +6,11 @@ WB.chapter({
 
     {
       id: "ch03-two-kinds-number",
+      reading: [
+        { title: "Floating point arithmetic: issues and limitations",
+          url: "https://docs.python.org/3/tutorial/floatingpoint.html",
+          note: "Why 0.1 + 0.2 is not 0.3, explained properly. Short, and it will stop this surprising you ever again." },
+      ],
       title: "Two kinds of number",
       prose: `
 <p>Python has two kinds of number, and the difference is not pedantry — it changes what your

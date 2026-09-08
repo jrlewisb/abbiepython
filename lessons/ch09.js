@@ -103,6 +103,11 @@ adjust.</p>`,
 
     {
       id: "ch09-accumulator-pattern-behind-almost",
+      reading: [
+        { title: "Python Tutor — watch a loop run",
+          url: "https://pythontutor.com/",
+          note: "Loops are much easier to believe once you have watched the counter change on every pass. Paste your accumulator in and step through it." },
+      ],
       title: "The accumulator: the pattern behind almost everything",
       prose: `
 <p>If you learn one loop shape, learn this one. You want a single answer out of a whole list —

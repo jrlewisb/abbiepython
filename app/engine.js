@@ -568,6 +568,30 @@
       runBtn.addEventListener("click", doRun);
     }
 
+    /* ---------- optional further reading ---------- */
+
+    if (step.reading && step.reading.length) {
+      var box = el("details", "reading");
+      var sum = el("summary", null, "Want to read more about this? (optional)");
+      box.appendChild(sum);
+      var inner = el("div", "inner");
+      var ul3 = el("ul");
+      step.reading.forEach(function (r) {
+        var li = el("li");
+        var a = el("a", null, escapeHtml(r.title));
+        a.href = r.url;
+        a.target = "_blank";
+        a.rel = "noopener noreferrer";
+        li.appendChild(a);
+        li.appendChild(el("span", "ext", " \u2197"));
+        if (r.note) { li.appendChild(el("span", "why", r.note)); }
+        ul3.appendChild(li);
+      });
+      inner.appendChild(ul3);
+      box.appendChild(inner);
+      main.appendChild(box);
+    }
+
     /* ---------- footer nav ---------- */
 
     var nav = el("div", "footnav");

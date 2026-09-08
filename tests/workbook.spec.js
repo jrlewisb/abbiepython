@@ -140,6 +140,47 @@ test.describe("every exercise grades correctly", () => {
   });
 });
 
+test.describe("the reference panel and further reading", () => {
+  test("the cheatsheet opens, filters, and links back to lessons", async ({ page }) => {
+    await openWorkbook(page);
+
+    await page.locator("#sheet-toggle").click();
+    await expect(page.locator("#sheet")).toHaveClass(/open/);
+    expect(await page.locator("#sheet .item").count()).toBeGreaterThan(30);
+
+    await page.locator("#sheet input.filter").fill("axis");
+    const visible = page.locator("#sheet .item:not(.hidden)");
+    expect(await visible.count()).toBeGreaterThan(0);
+    expect(await visible.count()).toBeLessThan(6);
+
+    // every "taught in chapter N" link must point at a step that exists
+    await page.locator("#sheet input.filter").fill("");
+    const targets = await page.$$eval("#sheet .item a.at",
+      (els) => els.map((e) => e.getAttribute("href").replace("#", "")));
+    const ids = (await page.evaluate(() => window.__workbook.steps)).map((s) => s.id);
+    const dangling = targets.filter((t) => !ids.includes(t));
+    expect(dangling, "cheatsheet links pointing at steps that do not exist").toEqual([]);
+  });
+
+  test("further reading renders as opt-in external links", async ({ page }) => {
+    await openWorkbook(page);
+    await page.evaluate(() => { location.hash = "ch05-one-line-at-time"; });
+    await expect(page.locator("details.reading")).toBeVisible();
+
+    // collapsed until she asks for it
+    expect(await page.locator("details.reading").evaluate((e) => e.open)).toBe(false);
+    await page.locator("details.reading summary").click();
+
+    const links = page.locator("details.reading a");
+    expect(await links.count()).toBeGreaterThan(0);
+    for (const href of await links.evaluateAll((els) => els.map((e) => e.href))) {
+      expect(href).toMatch(/^https:\/\//);
+    }
+    // must not steal her tab
+    expect(await links.first().getAttribute("target")).toBe("_blank");
+  });
+});
+
 test.describe("progress", () => {
   test("finishing a step ticks it, and the tick survives a reload", async ({ page }) => {
     await openWorkbook(page);

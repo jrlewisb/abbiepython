@@ -6,6 +6,14 @@ WB.chapter({
 
     {
       id: "ch15-everything-is-text",
+      reading: [
+        { title: "Reading and writing files",
+          url: "https://docs.python.org/3/tutorial/inputoutput.html#reading-and-writing-files",
+          note: "The official version, including the file modes this chapter skipped over." },
+        { title: "The csv module",
+          url: "https://docs.python.org/3/library/csv.html",
+          note: "Everything DictReader can do, plus writing CSVs back out." },
+      ],
       title: "A file is just a very long string",
       prose: `
 <p>Everything you have written so far has invented its own data. Real work does not: the data
