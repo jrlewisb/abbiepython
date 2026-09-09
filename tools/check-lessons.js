@@ -27,6 +27,20 @@ function pyrun(code, expr) {
   return JSON.parse(raw);
 }
 
+// Lessons from chapter 16 import numpy and friends. If they are missing, say so
+// once and clearly rather than reporting every exercise as broken.
+(function checkImports() {
+  const needed = ["numpy", "pandas"];
+  const missing = needed.filter((m) => {
+    try { return !!pyrun("import " + m).error; } catch (e) { return true; }
+  });
+  if (missing.length) {
+    console.error("\nMissing Python packages the lessons import: " + missing.join(", "));
+    console.error("Install them with:  python3 -m pip install " + missing.join(" ") + "\n");
+    process.exit(2);
+  }
+})();
+
 const norm = (s) => String(s == null ? "" : s).replace(/\r/g, "").trim();
 const lines = (s) => norm(s).split("\n").map((l) => l.trim()).filter((l) => l.length);
 

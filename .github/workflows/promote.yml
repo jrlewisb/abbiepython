@@ -23,6 +23,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install the Python packages the lessons import
+        run: python -m pip install --quiet numpy pandas matplotlib
       - run: node tools/check-lessons.js
       - run: npm install
       - run: npx playwright install --with-deps chromium
