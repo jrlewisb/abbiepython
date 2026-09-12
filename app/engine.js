@@ -109,6 +109,15 @@
       }
     });
     pyodide.runPython("import os; os.environ['MPLBACKEND'] = 'AGG'");
+
+    /* Chapter 20's Luna stand-in, dropped in as a real importable module. */
+    if (window.LUNA_DEMO_SOURCE) {
+      try {
+        try { pyodide.FS.mkdir("/wb"); } catch (e) { /* already there */ }
+        pyodide.FS.writeFile("/wb/lunapi_demo.py", window.LUNA_DEMO_SOURCE);
+        pyodide.runPython("import sys\nif '/wb' not in sys.path: sys.path.insert(0, '/wb')");
+      } catch (e) { /* the chapter will say so if the import fails */ }
+    }
   }
 
   function flushStreams() {
@@ -175,6 +184,11 @@
     result.ns = ns;
 
     try {
+      // importing the Luna stand-in pulls in numpy/pandas indirectly, which
+      // loadPackagesFromImports cannot see from the source alone
+      if (/lunapi_demo/.test(code)) {
+        await pyodide.loadPackage(["numpy", "pandas", "matplotlib"]);
+      }
       await pyodide.loadPackagesFromImports(code);
     } catch (e) { /* a bad import will surface properly below */ }
 

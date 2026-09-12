@@ -13,6 +13,29 @@ payload = json.load(sys.stdin)
 _sandbox = tempfile.mkdtemp(prefix="workbook-")
 os.chdir(_sandbox)
 
+# Chapter 20 imports the Luna stand-in. Its single source of truth lives in
+# app/lunademo.js (the browser reads it from there too); extract it and drop a
+# real module into the sandbox so `import lunapi_demo` works here as well.
+def _install_luna_demo():
+    here = os.path.dirname(os.path.abspath(__file__))
+    js = os.path.join(os.path.dirname(here), "app", "lunademo.js")
+    if not os.path.exists(js):
+        return
+    text = open(js, encoding="utf-8").read()
+    try:
+        body = text.split("LUNA_DEMO_SOURCE_START")[1].split("LUNA_DEMO_SOURCE_END")[0]
+        source = body[body.index("`") + 1:body.rindex("`")]
+    except (IndexError, ValueError):
+        return
+    with open(os.path.join(_sandbox, "lunapi_demo.py"), "w", encoding="utf-8") as fh:
+        fh.write(source)
+
+_install_luna_demo()
+
+# Running as a script puts tools/ on sys.path, not the sandbox — add it so the
+# stand-in module (and anything a snippet writes) can be imported.
+sys.path.insert(0, _sandbox)
+
 ns = {}
 buf = io.StringIO()
 err = None

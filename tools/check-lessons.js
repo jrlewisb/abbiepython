@@ -21,10 +21,19 @@ fs.readdirSync(path.join(ROOT, "lessons")).sort().forEach((f) => {
   }
 });
 
+// Every call starts a Python that re-imports pandas, so the same (code, expr)
+// asked twice is a second of wall clock for nothing. Checks ask repeatedly —
+// once for the verdict and again to build the failure message — so cache.
+const _pyCache = new Map();
+
 function pyrun(code, expr) {
+  const key = JSON.stringify([code, expr === undefined ? null : expr]);
+  if (_pyCache.has(key)) { return _pyCache.get(key); }
   const input = JSON.stringify(expr === undefined ? { code } : { code, expr });
   const raw = execFileSync(PY, [RUNNER], { input, encoding: "utf8" });
-  return JSON.parse(raw);
+  const out = JSON.parse(raw);
+  _pyCache.set(key, out);
+  return out;
 }
 
 // Lessons from chapter 16 import numpy and friends. If they are missing, say so
@@ -100,6 +109,19 @@ function evaluate(step, code) {
   });
 }
 
+// The "Expected output:" block in a task is what she reads and compares against.
+// If it does not match what the reference solution actually prints, she will
+// think she is wrong when she is right. Extract it and check it.
+function expectedOutputOf(step) {
+  if (!step.task) { return null; }
+  const m = step.task.match(/Expected output:<\/p>\s*<pre><code>([\s\S]*?)<\/code><\/pre>/);
+  if (!m) { return null; }
+  return m[1]
+    .replace(/&lt;/g, "<").replace(/&gt;/g, ">")
+    .replace(/&amp;/g, "&").replace(/&quot;/g, '"')
+    .replace(/\r/g, "").trim();
+}
+
 let problems = 0, tasks = 0;
 
 // Step ids are the keys her saved progress is stored under. They must be
@@ -136,6 +158,20 @@ CHAPTERS.forEach((ch) => {
       console.log("  ✕  " + id + "  " + st.title + "  — solution fails its own checks:");
       failed.forEach((f) => console.log("        · " + f.label + "  → " + (f.why || "returned false")));
     } else {
+      // does the task's stated output match what the solution really prints?
+      const expected = expectedOutputOf(st);
+      if (expected !== null) {
+        const actual = norm(pyrun(st.solution).stdout);
+        if (actual !== expected) {
+          problems++;
+          console.log("  \u2715  " + id + "  " + st.title +
+            "  — the task shows an \"Expected output\" that the solution does not produce:");
+          console.log("        task says: " + JSON.stringify(expected));
+          console.log("        actually:  " + JSON.stringify(actual));
+          return;
+        }
+      }
+
       // the starter must not already pass, or the task is meaningless
       const starter = evaluate(st, st.starter || "");
       const starterAll = starter.every((r) => r.ok);
