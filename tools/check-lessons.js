@@ -56,7 +56,7 @@ function makeCtx(code) {
     out: norm(base.stdout),
     outLines: lines(base.stdout),
     error: base.error,
-    figures: [],
+    figures: new Array(base.figures || 0).fill(null),
     get,
     py: (expr) => {
       const r = pyrun(code, expr);

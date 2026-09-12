@@ -1,6 +1,10 @@
 """Execute a snippet the way the workbook does and report back as JSON."""
 import sys, json, io, os, shutil, tempfile, contextlib, traceback
 
+# Chapter 19 draws figures. Force a headless backend before the snippet can
+# import matplotlib, so nothing tries to open a window on a CI runner.
+os.environ.setdefault("MPLBACKEND", "Agg")
+
 payload = json.load(sys.stdin)
 
 # Lessons from chapter 15 onwards write and read real files. Run every snippet
@@ -19,6 +23,18 @@ with contextlib.redirect_stdout(buf):
         err = traceback.format_exc()
 
 out = {"stdout": buf.getvalue(), "error": err}
+
+# How many figures the snippet left open, so checks can assert one was drawn.
+# Deliberately not closed: the Axes object stays usable for checks that read
+# its labels back.
+try:
+    if "matplotlib" in sys.modules:
+        import matplotlib.pyplot as _plt
+        out["figures"] = len(_plt.get_fignums())
+    else:
+        out["figures"] = 0
+except Exception:
+    out["figures"] = 0
 
 expr = payload.get("expr")
 if expr is not None:
